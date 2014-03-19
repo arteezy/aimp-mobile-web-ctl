@@ -4,7 +4,7 @@
 	<title>AIMP Mobile Web Control</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
-	<link rel="stylesheet" href="jquery.mobile-1.3.0/jquery.mobile-1.3.0.min.css">
+	<link rel="stylesheet" href="jquery.mobile-1.3.1/jquery.mobile-1.3.1.min.css">
 	<style>
 	body{
 		-webkit-touch-callout: none;
@@ -89,12 +89,14 @@
 		opacity: .5;
 	}
 	div.ui-slider{
-		margin: 0;
 		width: 100% !important;
 	}
+	div.ui-slider-track{
+		margin: 0 15px 0 15px;
+	}
 	</style>
-	<script src="jquery-1.9.1.min.js"></script>
-	<script src="jquery.mobile-1.3.0/jquery.mobile-1.3.0.min.js"></script>
+	<script src="jquery-2.0.0.min.js"></script>
+	<script src="jquery.mobile-1.3.1/jquery.mobile-1.3.1.min.js"></script>
 	<script>
 		var playlistData, playlistID, currentPlaylistID, currentPlaylistName;
 		var playlistCRC;
@@ -111,12 +113,12 @@
 			var $volume = $('#volume');
 			var $checkboxRepeat = $('#checkbox-repeat').checkboxradio();
 			var $checkboxRandom = $('#checkbox-random').checkboxradio();
-			
+
 			$.ajaxSetup({
 				url: '',
 				cache: false
 			});
-			
+
 			var playlistCache, songCurrentCache, playlistSongsCache, volumeCache;
 			var currentSongIndex, currentSongName;
 			var getSong = function(){
@@ -139,9 +141,9 @@
 						})();
 						currentSongIndex = data.PlayingFile;
 						currentSongName = data.PlayingFileName;
-						
+
 						if (!playlistID) $songsPage.find('h1').text(currentPlaylistName);
-						
+
 						var dataJSON = JSON.stringify(data);
 						if (dataJSON != songCurrentCache){
 							songCurrentCache = dataJSON;
@@ -150,7 +152,7 @@
 						}
 						$playlists.find('.selected').removeClass('selected');
 						$playlists.find('[data-id='+currentPlaylistID+']').addClass('selected');
-						
+
 						$songs.find('.selected').removeClass('selected');
 						if (playlistID == currentPlaylistID){
 							$songs.find('a:eq('+currentSongIndex+')').addClass('selected');
@@ -198,7 +200,7 @@
 			var init = function(){
 				$.ajax({
 					data: {
-						action: 'get_playlist_list',
+						action: 'get_playlist_list'
 					},
 					success: function(data){
 						if (!data) return;
@@ -210,39 +212,39 @@
 							$.each(data, function(){
 								html += '<li><a href="#songs-page" data-id="' + this.id + '">'+ this.name +'</a></li>';
 							});
-							if (!$playlistsPage.data('page')) $playlistsPage.page()
+							if (!$playlistsPage.data('page')) $playlistsPage.page();
 							$playlists.html(html).listview('refresh');
 						}
 					}
 				});
-				
+
 				getSong();
 				getSongs();
-				
+
 				$.ajax({
 					data: {
-						action: 'get_volume',
+						action: 'get_volume'
 					},
 					success: function(vol){
 						if (vol == volumeCache) return;
 						volumeCache = vol;
 						$volume.val(vol);
-						if ($volume.data('slider')){
+						if ($volume.data('mobile-slider')){
 							$volume.slider('refresh');
 						} else {
 							$volume.slider();
 						}
 					}
 				});
-				
+
 				$.ajax({
 					data: {
-						action: 'get_player_status',
+						action: 'get_player_status'
 					},
 					success: function(data){
 						if (!data || !data.status || data.status != 'OK') return;
-						$checkboxRepeat.attr('checked', !!parseInt(data.RepeatFile, 10)).checkboxradio('refresh');
-						$checkboxRandom.attr('checked', !!parseInt(data.RandomFile, 10)).checkboxradio('refresh');
+						$checkboxRepeat.prop('checked', !!parseInt(data.RepeatFile, 10)).checkboxradio('refresh');
+						$checkboxRandom.prop('checked', !!parseInt(data.RandomFile, 10)).checkboxradio('refresh');
 					}
 				});
 			};
@@ -255,7 +257,7 @@
 					setInterval(init, parseInt(time, 10)*1000);
 				}
 			});
-			
+
 			var volReq = null;
 			$volume.change(function(){
 				if (volReq) volReq.abort();
@@ -269,8 +271,8 @@
 					}
 				});
 			});
-			
-			$playlistsPage.find('li a').live('tap', function(){
+
+			$playlistsPage.on('tap', 'li a', function(){
 				var el = $(this);
 				var name = el.text();
 				$songsPage.find('h1').text(name);
@@ -279,8 +281,8 @@
 				playlistID = id;
 				getSongs();
 			});
-			
-			$songsPage.find('li a').live('tap', function(){
+
+			$songsPage.on('tap', 'li a', function(){
 				var el = $(this);
 				if (el.hasClass('selected')) return;
 				var elParent = el.parents('li:first');
@@ -298,8 +300,8 @@
 					}
 				});
 			});
-			
-			$('#player-buttons a').live('tap', function(){
+
+			$('#player-buttons').on('tap', 'a', function(){
 				var el = $(this);
 				var action = el.attr('id').replace('-button', '');
 				if (action == 'prev') action = 'prevous'; // obviously typo
@@ -312,9 +314,9 @@
 					}
 				});
 			});
-			
-			$checkboxRepeat.live('change', function(){
-				var checked = $checkboxRepeat.attr('checked');
+
+			$checkboxRepeat.on('change', function(){
+				var checked = $checkboxRepeat.prop('checked');
 				$.ajax({
 					data: {
 						action: 'set_player_status',
@@ -323,8 +325,8 @@
 					}
 				});
 			});
-			$checkboxRandom.live('change', function(){
-				var checked = $checkboxRandom.attr('checked');
+			$checkboxRandom.on('change', function(){
+				var checked = $checkboxRandom.prop('checked');
 				$.ajax({
 					data: {
 						action: 'set_player_status',
@@ -333,14 +335,14 @@
 					}
 				});
 			});
-			
-			$('#playlists-page .ui-header, #songs-page .ui-header').live('swiperight', function(){
+
+			$('#playlists-page .ui-header, #songs-page .ui-header').on('swiperight', function(){
 				$.mobile.changePage('#player-page');
 				$songsPage.find('h1').text(currentPlaylistName);
 				playlistID = currentPlaylistID;
 				getSongs();
 			});
-			
+
 			var progUpdate = false;
 			var padZero = function(num){
 				if (num < 10) return '0' + num;
@@ -359,24 +361,24 @@
 				if (progTrackReq) progTrackReq.abort();
 				progTrackReq = $.ajax({
 					data: {
-						action: 'get_track_position',
+						action: 'get_track_position'
 					},
 					success: function(data){
 						if (!data || !data.position) return;
 						progUpdate = true;
 						var p = data.position, l = data.length;
-						$progress.val(p/l*100).data('max', l);
-						if ($progress.data('slider')){
+						$progress.val(p / l * 100).data('max', l);
+						if ($progress.data('mobile-slider')){
 							$progress.slider('refresh');
 						} else {
 							$progress.slider();
 						}
 						$progressStart.text(formatProg(p));
-						$progressEnd.text('-' + formatProg(l-p));
+						$progressEnd.text('-' + formatProg(l - p));
 					}
 				});
 			}, 1000);
-			
+
 			var progReq;
 			$progress.change(function(e){
 				if (progUpdate){
@@ -433,7 +435,7 @@
 				<div class="ui-block-a progress-info" id="progress-start">&nbsp;</div>
 				<div class="ui-block-b progress-info" id="progress-end">&nbsp;</div>
 			</div>
-			<input type="range" id="progress" value="0" min="0" max="100" data-theme="a" data-role="none">
+			<input type="range" id="progress" value="0" min="0" max="100" data-theme="b" data-highlight="true" data-track-theme="c" data-role="none">
 		</div>
 	</div>
 	<div data-role="content">
@@ -449,7 +451,7 @@
 			</div>
 		</div>
 		<div id="player-volume">
-			<input type="range" id="volume" value="0" min="0" max="100" data-theme="b" data-role="none">
+			<input type="range" id="volume" value="0" min="0" max="100" data-theme="a" data-track-theme="a" data-role="none">
 		</div>
 	</div>
 </div>
